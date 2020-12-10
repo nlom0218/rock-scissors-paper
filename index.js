@@ -2,10 +2,15 @@ const $emoji = document.querySelector("#js-gameEmoji");
 const $stopBtn = document.querySelector("#js-stopBtn");
 const $seleted = document.querySelector("#js-seleted");
 const $result = document.querySelector("#js-result");
-const $resetBtn = document.querySelector("#js-resetBtn");
-const $winNum = document.querySelector("#js-winNum");
+const $numOfWin = document.querySelector("#js-numOfWin");
+const $numOfDraw = document.querySelector("#js-numOfDraw");
+const $numOfLose = document.querySelector("#js-numOfLose");
+const $oddsToWin = document.querySelector("#js-oddsToWin");
 
-let win = 0;
+let numOfGamesLeft = 10;
+let numOfWin = 0;
+let numOfDraw = 0;
+let numOfLose = 0;
 let changing;
 let curEmoji = "✌";
 const changeEmoji = () => {
@@ -25,58 +30,63 @@ paintSeleted = (seleted) => {
   $seleted.innerText = `당신은 "${seleted}"를 선택하였습니다.`;
 };
 
-paintResult = (seleted) => {
-  if (seleted === "✌") {
-    if (curEmoji === "✌") {
-      $result.innerText = "아쉽게 비겼습니다!";
-    } else if (curEmoji === "👊") {
-      $result.innerText = "당신은 졌습니다ㅠㅠ";
-    } else {
-      $result.innerText = "당신이 이겼습니다ㅎㅎ";
-      win += 1;
-    }
-  } else if (seleted === "👊") {
-    if (curEmoji === "👊") {
-      $result.innerText = "아쉽게 비겼습니다!";
-    } else if (curEmoji === "🖐") {
-      $result.innerText = "당신은 졌습니다ㅠㅠ";
-    } else {
-      $result.innerText = "당신이 이겼습니다ㅎㅎ";
-      win += 1;
-    }
+changeToNum = (emoji) => {
+  if (emoji === "✌") {
+    return -1;
+  } else if (emoji === "👊") {
+    return 0;
   } else {
-    if (curEmoji === "🖐") {
-      $result.innerText = "아쉽게 비겼습니다!";
-    } else if (curEmoji === "✌") {
-      $result.innerText = "당신은 졌습니다ㅠㅠ";
-    } else {
-      $result.innerText = "당신이 이겼습니다ㅎㅎ";
-      win += 1;
-    }
+    return 1;
   }
 };
 
-paintWinNum = () => {
-  $winNum.innerText = `이긴횟수는 ${win}회입니다.`;
+paintResult = (seleted) => {
+  const curEmojiNum = changeToNum(curEmoji);
+  const seletedNum = changeToNum(seleted);
+  const resultNum = seletedNum - curEmojiNum;
+  if (resultNum === 0) {
+    $result.innerText = "아쉽게 비겼습니다!";
+    numOfDraw += 1;
+  } else if ([1, -2].includes(resultNum)) {
+    $result.innerText = "당신이 이겼습니다ㅎㅎ";
+    numOfWin += 1;
+  } else {
+    $result.innerText = "당신은 졌습니다ㅠㅠ";
+    numOfLose += 1;
+  }
+};
+
+paintScoreboard = () => {
+  const numOfGames = numOfWin + numOfDraw + numOfLose;
+  const oddsToWin = Math.round((numOfWin / numOfGames) * 100);
+  $numOfWin.innerText = numOfWin;
+  $numOfDraw.innerText = numOfDraw;
+  $numOfLose.innerText = numOfLose;
+  $oddsToWin.innerText = `${oddsToWin}%`;
 };
 
 handleClickStopBtn = (e) => {
   if (e.target.nodeName !== "BUTTON") return;
+  $stopBtn.removeEventListener("click", handleClickStopBtn);
   clearInterval(changing);
+  let i = 3;
+  const countDown = setInterval(() => {
+    i -= 1;
+    if (i === 0) {
+      clearInterval(countDown);
+      $stopBtn.addEventListener("click", handleClickStopBtn);
+      changeEmoji();
+    }
+  }, 1000);
   const seleted = e.target.value;
   paintSeleted(seleted);
   paintResult(seleted);
-  paintWinNum();
-};
-
-handleClickResetBtn = () => {
-  changeEmoji();
+  paintScoreboard();
 };
 
 function init() {
   changeEmoji();
   $stopBtn.addEventListener("click", handleClickStopBtn);
-  $resetBtn.addEventListener("click", handleClickResetBtn);
 }
 
 init();
